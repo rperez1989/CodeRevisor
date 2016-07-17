@@ -1,0 +1,17 @@
+======OBJECT = ProcedureNLqGetLiquidatorName === Get Liquidator Name By LQRId=====
+=== RULES ===
+parm(in:&LQRId, out:&LQRName);
+
+=== PROCEDURE SOURCE ===
+/*
+2015-03-01	TA2-709	AMM Created.
+			Get Liquidator Name by Liquidator Id
+*/
+//
+
+for each
+	where LQRId = &LQRId
+	
+	&LQRName = LQRName
+endfor
+

@@ -1,0 +1,26 @@
+======OBJECT = ProcedureNLqUTaskShip === NLq UTask Ship=====
+=== RULES ===
+parm(in:&LqTskId, in:&UsrId);
+
+=== PROCEDURE SOURCE ===
+/*
+	2016-02-23 DV Created - Update Task Shipping Data.
+*/
+
+&message.Description = 'NLqUTaskShip - &LqTskId = ' + &LqTskId.ToString() 
+PTraceLog.Call(&Pgmname, &message)
+&message.Description = 'NLqUTaskShip - &UsrId = ' + &UsrId.ToString() 
+PTraceLog.Call(&Pgmname, &message)
+
+
+&ShipDate = servernow()
+
+for each
+	where LqTskId = &LqTskId
+	&message.Description = 'NLqUTaskShip - inside foreach' 
+	PTraceLog.Call(&Pgmname, &message)
+	LqTskShDte	= &ShipDate
+	LqTskShUsr	= &UsrId
+	exit
+endfor
+

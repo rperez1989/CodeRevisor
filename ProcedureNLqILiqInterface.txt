@@ -1,0 +1,66 @@
+======OBJECT = ProcedureNLqILiqInterface === NLq ILiq Interface=====
+=== RULES ===
+parm(in:&LqTskId);
+
+=== PROCEDURE SOURCE ===
+/*
+	2016-03-02 DV Created.
+		Insert into LqInt completed task's information.
+*/
+
+
+for each LqTskB
+	order LqTskBId
+	where LqTskId = &LqTskId
+	
+	//new books
+	if (LqTskBShNQ > 0)
+		PGet001('LQINT', &AuxId)
+		&LqInt.LqIntID 		= &AuxId
+		&LqInt.LqIntTC		= "TXT"
+		&LqInt.LqIntStrN	= LqTskShStr
+		&LqInt.LqIntDept	= trim(str(PGetPr23()))
+		&LqInt.LqIntDate	= LqTskInsOn
+		&LqInt.LqIntLiqN	= LqTskId
+		&LqInt.LqIntLiqr	= LQRName.Trim()
+		&LqInt.LqIntRefN	= LqTskRefN.Trim()
+		&LqInt.LqIntQty		= LqTskBShNQ
+		&LqInt.LqIntBRP		= LqTskBPRSN
+		&LqInt.LqIntBREP	= round((LqTskBPRSN * LqTskBShNQ),2)
+		&LqInt.LqIntBLP		= LqTskBPrc
+		&LqInt.LqIntBLEP	= round((LqTskBPrc * LqTskBShNQ),2)
+		&LqInt.LqIntEAN		= LqTskBEAN.Trim()
+		&LqInt.LqIntAthr	= LqTskBAthr.Trim()
+		&LqInt.LqIntTtle	= LqTskBTtl.Trim()
+		&LqInt.LqIntAPSts	= 'PE'
+		&LqInt.LqIntTStmp	= servernow()
+		&LqInt.Save()
+	endif
+	
+	//used books
+	if (LqTskBShUQ > 0)	
+		PGet001('LQINT', &AuxId)
+		&LqInt.LqIntID 		= &AuxId
+		&LqInt.LqIntTC		= "TXT"
+		&LqInt.LqIntStrN	= LqTskShStr
+		&LqInt.LqIntDept	= trim(str(PGetPr24()))
+		&LqInt.LqIntDate	= LqTskInsOn
+		&LqInt.LqIntLiqN	= LqTskId
+		&LqInt.LqIntLiqr	= LQRName.Trim()
+		&LqInt.LqIntRefN	= LqTskRefN.Trim()
+		&LqInt.LqIntQty		= LqTskBShUQ
+		&LqInt.LqIntBRP		= LqTskBPRSU
+		&LqInt.LqIntBREP	= round((LqTskBPRSU * LqTskBShUQ),2)
+		&LqInt.LqIntBLP		= LqTskBPrc
+		&LqInt.LqIntBLEP	= round((LqTskBPrc * LqTskBShUQ),2)
+		&LqInt.LqIntEAN		= LqTskBEAN.Trim()
+		&LqInt.LqIntAthr	= LqTskBAthr.Trim()
+		&LqInt.LqIntTtle	= LqTskBTtl.Trim()
+		&LqInt.LqIntAPSts	= 'PE'
+		&LqInt.LqIntTStmp	= servernow()
+		&LqInt.Save()
+	endif
+	
+endfor
+
+

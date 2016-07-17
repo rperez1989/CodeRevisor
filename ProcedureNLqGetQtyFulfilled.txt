@@ -1,0 +1,16 @@
+======OBJECT = ProcedureNLqGetQtyFulfilled === Get Liquidation Quantity Fulfilled=====
+=== RULES ===
+parm(in:&LqLstId, in:&LqLinId, out:&LqExcQtyFF);
+
+=== PROCEDURE SOURCE ===
+/*
+2016-01-21	AMM	Created. Get Quantity Fulfilled.
+*/
+
+for each
+	where LqLstId = &LqLstId
+	where LqLinId = &LqLinId
+	
+	&LqExcQtyFF = LqExcQtyFF
+endfor
+

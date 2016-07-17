@@ -1,0 +1,87 @@
+======OBJECT = ProcedureNLqPProcessTask === NLq PProcess Task=====
+=== RULES ===
+parm(in: &LqTskId);
+
+=== PROCEDURE SOURCE ===
+/*
+	2016-02-25 DV Created
+*/
+
+//Get head data
+for each 	//LqTsk
+	where LqTskId = &LqTskId
+	&ShippingStore 	= LqTskShStr
+	&ShippingUnit	= LqTskShUnt
+	exit
+endfor
+
+
+//iterate task lines
+for each	//LqTskB
+	where LqTskId = &LqTskId
+	
+	&AuxEAN = LqTskBEAN.Trim()
+	&TrcMessage.Description = '&AuxEAN = ' + &AuxEAN.ToString()
+	do 'trace'
+	do 'get_bookId_from_EAN'
+	
+	if (&BkID <> 0)
+		//Markdown
+		if (LqTskBShNQ > 0 or LqTskBShUQ > 0)
+			//AdjReasons.LiquidationShipping
+			PAddAdjustment(&ShippingStore, &ShippingUnit, &BkID, LqTskBCls, LqTskBShNQ, LqTskBShUQ, AdjReasons.LiquidationShipping, '', &LqTskId, &LqTskId, '', Boolean.FALSE, &AdjustmentId) 
+		endif
+		//Discrepancy
+		if (LqTskBRNQy <> LqTskBShNQ or LqTskBRUQy <> LqTskBShUQ)
+			//AdjReasons.LiquidationShippingDiscrepancy
+			&NewDiscrQty = LqTskBRNQy - LqTskBShNQ
+			&UsdDiscrQty = LqTskBRUQy - LqTskBShUQ
+			PAddAdjustment(&ShippingStore, &ShippingUnit, &BkID, LqTskBCls, &NewDiscrQty, &UsdDiscrQty, AdjReasons.LiquidationShippingDiscrepancy, '', &LqTskId, &LqTskId, '', Boolean.FALSE, &AdjustmentId) 
+		endif
+	else
+		//Trace BkId Empty Error
+		&TrcMessage.Description = "Erro looking for BookID - EAN # " + &AuxEAN.Trim() + " - TaskId: " + &LqTskId.ToString().Trim()
+		do 'trace'
+	endif
+	
+endfor
+
+//mark Task as shipped
+//Get head data
+for each 	//LqTsk
+	where LqTskId = &LqTskId
+	LqTskSts = TnfStatus.Completed
+	exit
+endfor
+commit
+
+
+	
+	
+	
+//-------------------------------------------------------- Subs -------------------------------------------------------------//
+
+Sub 'get_bookId_from_EAN'
+	
+	&BkID		= 0
+	//&AuxEAN		= &EAN.Trim()
+	&EANPre 	= Substr(&AuxEAN,1,3)
+	&lenght     = Len(&AuxEAN)
+    &EANPos     = Substr(&AuxEAN,4,&lenght)   			//Remove the first 3 digits	
+	PPIGet29(&EanPre, Division.New, &ISBNPre)     	//Map the first 3 digits
+    &ISBN       = &ISBNPre.Trim() + &EANPos.Trim()
+    &ISBN12     = substr(&ISBN, 1, 12)
+    &BkISBNPre  = &ISBN12.ToNumeric()
+	&TrcMessage.Description = '&BkISBNPre = ' + &BkISBNPre.ToString()
+	do 'trace'
+	PBKGet21(&BkISBNPre, &BkID)						//Get BookId
+	
+EndSub //get_bookId_from_EAN
+
+Sub 'trace'
+	
+	&TrcMessage.Type = MessageTypes.Error
+	PTraceLog(&Pgmname, &TrcMessage)
+	
+EndSub //trace
+
