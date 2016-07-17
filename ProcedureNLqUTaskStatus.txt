@@ -1,0 +1,16 @@
+======OBJECT = ProcedureNLqUTaskStatus === NLq UTask Status=====
+=== RULES ===
+parm(in:&NewTaskStatus);
+
+=== PROCEDURE SOURCE ===
+/*
+	2016-02-26 DV Created - Update Task Status.
+*/
+
+for each
+	where LqTskId = &LqTskId
+	LqTskSts = &NewTaskStatus
+	exit
+endfor
+commit
+

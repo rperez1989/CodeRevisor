@@ -1,0 +1,17 @@
+======OBJECT = ProcedureNLqULqLstSts === Liquidation List Update Status=====
+=== RULES ===
+parm(in:&LqLstId, in:&LqLstSts);
+
+=== PROCEDURE SOURCE ===
+/*
+	2016-04-07 DV Created. 
+		Update LqLstSts value.
+*/
+
+&LqLst.Load(&LqLstId)
+if &LqLst.Success()
+	&LqLst.LqLstSts = &LqLstSts
+	&LqLst.Save()
+	commit
+endif
+

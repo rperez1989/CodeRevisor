@@ -1,0 +1,34 @@
+======OBJECT = ProcedureNLqrGLiquidators === NLqr GLiquidators=====
+=== RULES ===
+parm(out:&Liquidators);
+
+=== PROCEDURE SOURCE ===
+/*
+	2016-02-18 - DV - Return a collection of Liquidators.
+	2016-03-23	LAZ	- Filter to show only active ones
+	2016-03-24	LAZ	TA2-908 Since we search by name, sort by name to optimize search
+				Ignore WARNING on ORDER!
+*/
+
+&Liquidators.Clear()
+
+for each	//LQR
+	order LQRName
+	where LQRSts = AIStatus.Active
+	
+	&liquidator = new()
+	&liquidator.LQRId		= LQRId
+	&liquidator.LQRName		= LQRName.ToUpper().Trim()
+	&liquidator.LQRPhone	= LQRPhone.Trim()
+	&liquidator.LQRFax		= LQRFax.Trim()
+	&liquidator.LQRAddrs	= LQRAddrs.Trim()
+	&liquidator.LQREmail	= LQREmail.Trim()
+	&liquidator.LQRWebSte	= LQRWebSte.Trim()
+	&liquidator.LQRSts		= LQRSts
+	&liquidator.LQRAttTo	= LQRAttTo.Trim()
+	&liquidator.LQRNotes	= LQRNotes.Trim()
+	//add to collection
+	&Liquidators.Add(&liquidator)
+	
+endfor
+

@@ -1,0 +1,261 @@
+======OBJECT = ProcedureNLQREP_ShipTicket === Shipping ticket report=====
+=== RULES ===
+Parm(in:&pLqTskID);
+
+output_file("NLQShipReport", "PDF");
+
+=== PROCEDURE SOURCE ===
+/*
+2016-03-04 RP   Created
+*/
+
+
+&message.Description = '&pLqTskID = ' + &pLqTskID.ToString()
+PTraceLog.Call(&Pgmname, &message)
+
+&LQList.FromXml( &Session.Get('TnfListPrint'))	
+printfile("xml")
+printfile(&LQList.ToXml())
+
+
+if &pLqTskID = 0
+	
+	for &indexLqTskId in &LQList
+		
+		For each
+			where LqTskId = &indexLqTskId.TnfID
+			
+			&LqTskID = LqTskId
+			
+		endfor
+		do 'PrintTicket'
+	endfor
+	
+	
+else	
+	&LqTskID    = &pLqTskID
+	do 'PrintTicket'
+endif
+
+
+
+Sub 'PrintTicket'
+
+&LineSDT = new()    //laz 11-11-04
+&TypeHeading = 'Liquidation'
+
+
+&NEW_BK_ID = PGetPr21.Udp()
+&USED_BK_ID = PGetPr22.Udp()
+
+&reprint0 = ''
+&reprint1 = ''
+&reprint2 = ''
+
+//MB 2014-10-21. #2113
+&Code = &LqTskID.ToString()
+&Code = &Code.Trim()
+&TemporalPath = PGetPr10.Udp()
+&Path = &TemporalPath.Trim() + &Code + '.gif'
+PgenerateBarcode.Call(&Path,&Code)
+&barcode = loadbitmap(&Path)
+//END MB--------------
+
+print header
+&total = 0
+
+&lastPage = Boolean.FALSE
+
+	for each 
+		Order LqTskId
+		where LqTskId = &LqTskID
+		
+		&STRNUMBER = LqTskShStr
+		&UNTNUMBER = LqTskShUnt
+		
+		NLqGetLiquidatorName.Call(LQRId,&LQRName)
+  		
+		&LQTskStrDsc = LqTskStrDsc
+        print body
+		
+		&message.Description = '&Inside first foreach'
+		PTraceLog.Call(&Pgmname, &message)
+		for each
+			where LqTskId = &LqTskID
+			
+			
+			&message.Description = '&Inside second foreach'
+			PTraceLog.Call(&Pgmname, &message)
+			&BkISBN		= LqTskBEAN
+			&BkTitle	= LqTskBTtl
+        	&BkAuthor   = LqTskBAthr 	
+        	PClsGt01.Call(LqTskBCls,&BkClsName)
+			&LqTskBShNQ = LqTskBShNQ
+        	&LqTskBShUQ = LqTskBShUQ 
+			&PriceNew 	= LqTskBPRSN
+			&PriceUse	= LqTskBPRSU
+			&LqPrice	= LqTskBPrc
+			
+			Do 'Print'
+			
+		endfor
+	
+		
+	endfor   
+    
+    // Print line from SDT
+    do 'PrintLineFromSDT'
+
+    &totalStr = '$' + Trim(&total.ToString())
+    print bottom
+    &lastPage = Boolean.TRUE
+    
+    print Tracking
+    do 'getTrackingInfo'
+
+    
+    footer
+        if &lastPage = Boolean.TRUE
+            print footer
+        endif
+    end
+
+    eject   // added by cdm on 10-24-2011
+
+EndSub
+
+
+sub 'getTrackingInfo'
+    &TrkNumbers = ''
+    for each Order LqTskId
+    where LqTskId = &LqTskID
+        &TrkNumbers = LqTrckNbr.Trim()
+        &TspPrvName = TspPrvName.Trim()
+        print TrackingLine
+    endfor
+endsub
+
+
+
+sub 'PrintNew'
+    if &LqTskBShNQ > 0
+        &message.Type = MessageTypes.Verbose
+        &message.Description = 'Print New'
+        PTraceLog.Call(&Pgmname, &message)
+    
+        &division 	 = &NEW_BK_ID
+        &Price 		 = &LqPrice			//Liquidation Price
+        //&CPriceNew = '$' + trim(&PriceNew.ToString())
+        //&CPriceUse = ''
+        &LQQty 		 = &LqTskBShNQ
+        &lineTotal 	 = &Price * &LqTskBShNQ
+        &total 		+= &lineTotal
+        
+        &priceStr 	 = '$' + Trim(&Price.ToString())
+        &lineTotalStr= '$' + Trim(&lineTotal.ToString())
+    
+        
+        //    print line
+        &LineItem.Division  = &division
+        //&LineItem.PriceNew  = &CPriceNew
+        //&LineItem.PriceUsed = &CPriceUse
+        &LineItem.TnfQty    = &LQQty
+        &LineItem.TnfPrice  = &priceStr
+        &LineItem.LineTotal = &lineTotalStr
+    endif    
+endsub
+
+sub 'PrintUsed'
+    if &LqTskBShUQ > 0
+        &message.Type = MessageTypes.Verbose
+        &message.Description = 'Sub Print Used  '
+        PTraceLog.Call(&Pgmname, &message)
+    
+        &division 	 = &USED_BK_ID
+        &Price 		 = &LqPrice			//Liquidation Price
+        //&CPriceNew = ''
+        //&CPriceUse = '$' + trim(&PriceUse.ToString())
+        &LQQty 		 = &LqTskBShUQ
+        &lineTotal 	 = &Price * &LqTskBShUQ
+        &total 		+= &lineTotal
+        
+        &priceStr = '$' + Trim(&Price.ToString())
+        &lineTotalStr = '$' + Trim(&lineTotal.ToString())
+    
+        //    print line
+        &LineItem.Division  = &division
+        //&LineItem.PriceNew  = &CPriceNew
+        //&LineItem.PriceUsed = &CPriceUse
+        &LineItem.TnfQty    = &LQQty
+        &LineItem.TnfPrice  = &priceStr
+        &LineItem.LineTotal = &lineTotalStr
+    endif
+endsub
+
+
+Sub 'Print'
+    &message.Type = MessageTypes.Verbose
+    &message.Description = 'Sub Print. NewQty = '+ &LqTskBShNQ.ToString() +  'UsdQty= ' + &LqTskBShUQ.ToString()
+    PTraceLog.Call(&Pgmname, &message)
+
+    //LAZ 2011-11-23: There must be two new() if there are two lines... each line must have its own new. 
+    //                I don't understand how this worked before...
+
+    if &LqTskBShNQ > 0                                                         //LAZ 2011-11-13
+        &LineItem = new ShipReceiveTicketLine.ShipReceiveTicketLineItem()   //LAZ 2011-11-13
+    
+        // Load SDT book data  
+        &LineItem.BkISBN    = &BkISBN 
+        &LineItem.BKTitle   = &BkTitle   
+        &LineItem.BKAuthor  = &BkAuthor    
+        &LineItem.BkClsName = &BkClsName                                    //RP  2015-1-09
+
+        do 'PrintNew'
+        &LineSDT.Add(&LineItem)                                             //LAZ 2011-11-13
+
+    endif
+
+    if &LqTskBShUQ > 0                                                         //LAZ 2011-11-13
+        &LineItem = new ShipReceiveTicketLine.ShipReceiveTicketLineItem()
+    
+        // Load SDT book data  
+        &LineItem.BkISBN    = &BkISBN 
+        &LineItem.BKTitle   = &BkTitle   
+        &LineItem.BKAuthor  = &BkAuthor       
+        &LineItem.BkClsName = &BkClsName 
+
+        do 'PrintUsed'
+        &LineSDT.Add(&LineItem)
+    
+    endif
+    
+EndSub
+
+
+
+Sub 'PrintLineFromSDT'
+	
+    &message.Type = MessageTypes.Verbose
+    &message.Description = 'Sub PrintLineFromSDT. ' + &LineSDT.ToXml() 
+    PTraceLog.Call(&Pgmname, &message)
+	
+	
+    &LineSDT.Sort("BkAuthor, BkTitle, BkISBN, BkClsAbr")
+    For &LineItem in &LineSDT
+        &BkISBN       = &LineItem.BkISBN    
+        &BkTitle      = &LineItem.BKTitle      
+        &BkAuthor     = &LineItem.BKAuthor  
+        &BkClsAbr     = &LineItem.BkClsAbr 
+		&division     = &LineItem.Division  
+        //&CPriceNew    = &LineItem.PriceNew  
+        //&CPriceUse    = &LineItem.PriceUsed 
+        &LQQty        = &LineItem.TnfQty    
+        &priceStr     = &LineItem.TnfPrice  
+        &lineTotalStr = &LineItem.LineTotal 
+        &BkClsName    = &LineItem.BkClsName
+		
+        print line
+    endfor
+EndSub
+
+
