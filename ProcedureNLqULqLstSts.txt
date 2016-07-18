@@ -5,7 +5,8 @@ parm(in:&LqLstId, in:&LqLstSts);
 === PROCEDURE SOURCE ===
 /*
 	2016-04-07 DV Created. 
-		Update LqLstSts value.
+		Update LqLstSts value.'
+		testtttttttttttttttttttt
 */
 
 &LqLst.Load(&LqLstId)
