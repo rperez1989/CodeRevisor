@@ -9,13 +9,15 @@ parm(in:&LqTskId);
 */
 
 
+
 for each LqTskB
-	order LqTskBId
+	order LqTskBId LqInt
 	where LqTskId = &LqTskId
 	
 	//new books
 	if (LqTskBShNQ > 0)
 		PGet001('LQINT', &AuxId)
+		//testttt
 		&LqInt.LqIntID 		= &AuxId
 		&LqInt.LqIntTC		= "TXT"
 		&LqInt.LqIntStrN	= LqTskShStr

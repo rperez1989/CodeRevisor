@@ -8,6 +8,8 @@ parm(in:&LqLstId, in:&LqLstSts);
 		Update LqLstSts value.
 */
 
+//Testttttt
+
 &LqLst.Load(&LqLstId)
 if &LqLst.Success()
 	&LqLst.LqLstSts = &LqLstSts
